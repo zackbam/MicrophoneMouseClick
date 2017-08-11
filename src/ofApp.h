@@ -37,4 +37,5 @@ class ofApp : public ofBaseApp{
 		ofSoundStream soundStream;
 		float threshold;
 		bool MOUSE_STATE;
+		bool rightClick;
 };

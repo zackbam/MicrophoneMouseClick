@@ -40,6 +40,9 @@ void ofApp::setup(){
 	}
 	MOUSE_STATE = false;
 	threshold /= 100.f;
+	rightClick = false;
+	ofSetWindowShape(ofGetScreenWidth()*0.06f, ofGetScreenHeight()*0.1f);
+	ofSetWindowPosition(ofGetScreenWidth()*0.93f, ofGetScreenHeight()*0.86f);
 }
 
 //--------------------------------------------------------------
@@ -54,7 +57,10 @@ void ofApp::update(){
 	if (scaledVol > threshold && !MOUSE_STATE) {
 		// left down 
 		Input.type = INPUT_MOUSE;
-		Input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+		if (rightClick) 
+			Input.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+		else
+			Input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
 		::SendInput(1, &Input, sizeof(INPUT));
 		MOUSE_STATE = true;
 	}
@@ -62,7 +68,10 @@ void ofApp::update(){
 		// left up
 		::ZeroMemory(&Input, sizeof(INPUT));
 		Input.type = INPUT_MOUSE;
-		Input.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+		if (rightClick)
+			Input.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+		else
+			Input.mi.dwFlags = MOUSEEVENTF_LEFTUP;
 		::SendInput(1, &Input, sizeof(INPUT));
 		MOUSE_STATE = false;
 	}
@@ -72,97 +81,22 @@ void ofApp::update(){
 	if( volHistory.size() >= 400 ){
 		volHistory.erase(volHistory.begin(), volHistory.begin()+1);
 	}
+	HWND AppWindow = GetActiveWindow();
+	SetWindowPos(AppWindow, HWND_TOPMOST, NULL, NULL, NULL, NULL, SWP_NOMOVE | SWP_NOSIZE);
 }
 
 
 //--------------------------------------------------------------
-void ofApp::draw(){
-	
+void ofApp::draw() {
+	ofSetColor(100 + MOUSE_STATE * 150, 58, 135);
+	ofFill();
+	ofDrawCircle(ofGetWindowWidth() / 2.f, ofGetHeight() / 2.f, scaledVol * ofGetWindowWidth());
+
 	ofSetColor(225);
-	ofDrawBitmapString("AUDIO INPUT EXAMPLE", 32, 32);
-	ofDrawBitmapString("press 's' to unpause the audio\n'e' to pause the audio", 31, 92);
-	
-	ofNoFill();
-	
-	// draw the left channel:
-	ofPushStyle();
-		ofPushMatrix();
-		ofTranslate(32, 170, 0);
-			
-		ofSetColor(225);
-		ofDrawBitmapString("Left Channel", 4, 18);
-		
-		ofSetLineWidth(1);	
-		ofDrawRectangle(0, 0, 512, 200);
-
-		ofSetColor(245, 58, 135);
-		ofSetLineWidth(3);
-					
-			ofBeginShape();
-			for (unsigned int i = 0; i < left.size(); i++){
-				ofVertex(i*2, 100 -left[i]*180.0f);
-			}
-			ofEndShape(false);
-			
-		ofPopMatrix();
-	ofPopStyle();
-
-	// draw the right channel:
-	ofPushStyle();
-		ofPushMatrix();
-		ofTranslate(32, 370, 0);
-			
-		ofSetColor(225);
-		ofDrawBitmapString("Right Channel", 4, 18);
-		
-		ofSetLineWidth(1);	
-		ofDrawRectangle(0, 0, 512, 200);
-
-		ofSetColor(245, 58, 135);
-		ofSetLineWidth(3);
-					
-			ofBeginShape();
-			for (unsigned int i = 0; i < right.size(); i++){
-				ofVertex(i*2, 100 -right[i]*180.0f);
-			}
-			ofEndShape(false);
-			
-		ofPopMatrix();
-	ofPopStyle();
-	
-	// draw the average volume:
-	ofPushStyle();
-		ofPushMatrix();
-		ofTranslate(565, 170, 0);
-			
-		ofSetColor(225);
-		ofDrawBitmapString("CUrrent vol: " + ofToString(curVol * 100.0, 0), 4, 18);
-		ofDrawRectangle(0, 0, 400, 400);
-		
-		ofSetColor(100+MOUSE_STATE*150, 58, 135);
-		ofFill();		
-		ofDrawCircle(200, 200, scaledVol * 190.0f);
-		
-		//lets draw the volume history as a graph
-		ofBeginShape();
-		for (unsigned int i = 0; i < volHistory.size(); i++){
-			if( i == 0 ) ofVertex(i, 400);
-
-			ofVertex(i, 400 - volHistory[i] * 70);
-			
-			if( i == volHistory.size() -1 ) ofVertex(i, 400);
-		}
-		ofEndShape(false);		
-			
-		ofPopMatrix();
-	ofPopStyle();
-	
-	drawCounter++;
-	
-	ofSetColor(225);
-	string reportString = "buffers received: "+ofToString(bufferCounter)+"\ndraw routines called: "+ofToString(drawCounter)+"\nticks: " + ofToString(soundStream.getTickCount());
-	ofDrawBitmapString(reportString, 32, 589);
-		
+	if (rightClick)
+		ofDrawBitmapString("Right Click", ofGetWindowWidth()*0.1, ofGetWindowHeight()*0.5);
+	else
+		ofDrawBitmapString("Left Click", ofGetWindowWidth()*0.1, ofGetWindowHeight()*0.5);
 }
 
 //--------------------------------------------------------------
@@ -228,7 +162,7 @@ void ofApp::mousePressed(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-
+	rightClick = !rightClick;
 }
 
 //--------------------------------------------------------------
